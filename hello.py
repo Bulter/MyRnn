@@ -101,15 +101,15 @@ class  DataSet(object):
     切割成[ batch1,batch2]
     '''
     def BuidBatch(self,batchSize,vocabDict,sentenSize=32,
-                  testPath="./data/test.tsv",valPath="./data/dev.tsv",trainPath="./data/train.tsv"):
+                  testPath="./data/test_mini.tsv",valPath="./data/dev_mini.tsv",trainPath="./data/train_mini.tsv"):
 
         testLabel,testText = self.ReadTSV(testPath)
         valLabel,valText  = self.ReadTSV(valPath)
         trainLabel,trainText = self.ReadTSV(trainPath)
 
-        testText = self.Doc2Embedding(testText,vocabDict,sentenSize)
-        valText = self.Doc2Embedding(valText,vocabDict,sentenSize)
-        trainText = self.Doc2Embedding(trainText, vocabDict, sentenSize)
+        testText = self.Word2Vect(testText,vocabDict,sentenSize)
+        valText = self.Word2Vect(valText,vocabDict,sentenSize)
+        trainText = self.Word2Vect(trainText, vocabDict, sentenSize)
 
 
 
@@ -161,8 +161,10 @@ class  DataSet(object):
 
         #model.wv.save_word2vec_format("word300.txt",binary=False)
 
-
         wordEmbding=[]
+        found_numb = 0
+        not_found_numb = 0
+        counts = len(docments)
         for   k,v in  vocabDict.items():
 
             #print("k,",k )
@@ -170,22 +172,24 @@ class  DataSet(object):
                 tmpVect = model.wv.get_vector(k)
                 #print("model==",tmpVect)
                 wordEmbding.append(tmpVect)
+                found_numb += 1
             else:
                 embedding = np.random.uniform(0, 1, embSize)
                 wordEmbding.append(embedding)
-                print("not contain key==",k)
+                not_found_numb += 1
+                # print("not contain key==",k)
+
+        print(f"word_vec train counts:{counts}, found:{found_numb}, not found:{not_found_numb}")
+
+        # fileName = "{}word{}.npz".format(prePath,embSize)
+        # if not os.path.exists(fileName):
+        #     fd = open(fileName,"w",encoding="utf-8")
+        #     fd.close()
+
+        # np.savez(fileName,vocabDict=vocabDict,wordEmbding=wordEmbding)
 
 
-
-        fileName = "{}word{}.npz".format(prePath,embSize)
-        if not os.path.exists(fileName):
-            fd = open(fileName,"w",encoding="utf-8")
-            fd.close()
-
-        np.savez(fileName,vocabDict=vocabDict,wordEmbding=wordEmbding)
-
-
-        return  model
+        return  wordEmbding
 
     #加载词向量
     def  LoadWordEmbding(self,path="./data/word300.npz"):
@@ -195,7 +199,7 @@ class  DataSet(object):
         vocabDict = savNpz["vocabDict"].item()
 
         print("embding===",len(embedding_pretrained))
-        print("embding dict=",vocabDict)
+        print("embding dict=",len(vocabDict))
 
         return  vocabDict, embedding_pretrained
 
@@ -203,15 +207,19 @@ class  DataSet(object):
     def  BuildWordVect(self,embSize):
 
         if not os.path.exists("./data/word300.npz"):
+            print("word_vec is not exist, beginning train word_vec...")
+
             label, text = self.ReadCSV("./data/ch_auto.csv")
 
             splitTexts = [[word for word in jieba.cut(setences)] for setences in text]
 
-            print(splitTexts[0])
+            # print(splitTexts[0])
 
             vocabDict = self.BuildVocabDict(splitTexts)
 
             self.Word2Vect(splitTexts, vocabDict, embSize=embSize)
+            
+            print("word_vec train end!")
 
 
 class   RNNConfig():

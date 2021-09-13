@@ -8,7 +8,7 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s, level=log
 
 raw_sentences = ["the quick brown fox jumps over the lazy dogs","yoyoyo you go home now to sleep"]
 
-sentences= [s.split() for s in raw_sentences]
+sentences= [s.split("\s") for s in raw_sentences]
 
 model = word2vec.Word2Vec(sentences=sentences, min_count=1)
 
